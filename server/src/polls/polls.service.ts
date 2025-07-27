@@ -4,10 +4,14 @@ import { CreatePollFields } from "src/types/servcie-types/create-poll.type";
 import { JoinPollFields } from "src/types/servcie-types/join-poll.type";
 import { RejoinPollFields } from "src/types/servcie-types/rejoin-poll.type";
 import { PollsRepository } from './polls.repository';
+import { JwtService } from "@nestjs/jwt";
 
 @Injectable()
 export class PollsService {
-    constructor(private readonly pollsRepository: PollsRepository) {}
+    constructor(
+        private readonly pollsRepository: PollsRepository,
+        private readonly jwtService: JwtService
+    ) {}
     private readonly logger = new Logger(PollsService.name);
 
     async createPoll(fields: CreatePollFields) {
@@ -19,10 +23,21 @@ export class PollsService {
             pollID,
             userID
         });
-        // TODO: create an access token based off of pollID and UserID
+        this.logger.debug(
+            `Creating token string for pollID: ${createdPoll.id} and userID: ${userID}`
+        );
+        const signedString = this.jwtService.sign(
+            {
+                pollID: createdPoll.id,
+                name: fields.name,
+            },
+            {
+                subject: userID,
+            }
+        );
         return {
-            poll: createdPoll
-            // accessToken
+            poll: createdPoll,
+            accessToken: signedString,
         };
     }
     async joinPoll(fields: JoinPollFields) {
@@ -31,11 +46,21 @@ export class PollsService {
             `Fetching poll with ID: ${fields.pollID} for user with ID ${userID}`
         );
         const joinedPoll = await this.pollsRepository.getPoll(fields.pollID);
-        // TODO: create access Token
-
+        this.logger.debug(
+            `Creating token string for pollID: ${joinedPoll.id} and userID: ${userID}`
+        );
+        const signedString = this.jwtService.sign(
+            {
+                pollID: joinedPoll.id,
+                name: fields.name,
+            },
+            {
+                subject: userID,
+            }
+        );
         return {
-            poll: joinedPoll, 
-            // access Token
+            poll: joinedPoll,
+            accessToken: signedString,
         };
     }
     async rejoinPoll(fields: RejoinPollFields) {
