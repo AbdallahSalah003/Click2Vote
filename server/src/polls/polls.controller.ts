@@ -1,23 +1,27 @@
 import { Body, Controller, Post, UsePipes, ValidationPipe } from "@nestjs/common";
 import { JoinPollDto } from "src/dtos/join-polls.dto";
 import { CreatePollDto } from "src/dtos/polls.dto";
+import { PollsService } from "./polls.service";
 
 @Controller('polls')
 @UsePipes(ValidationPipe)
 export class PollsController {
+    constructor(private readonly pollsService: PollsService) {}
     @Post()
     async create(@Body() createPollDto: CreatePollDto) {
-        console.log("creating poll...");
-        return createPollDto;
+        return await this.pollsService.createPoll(createPollDto);
     }
 
     @Post('/join')
     async join(@Body() joinPollDto: JoinPollDto) {
-        console.log("joining poll ...");
-        return joinPollDto;
+        return await this.pollsService.joinPoll(joinPollDto);
     }
     @Post('/rejoin')
     async region() {
-        console.log('rejoining poll...');
+        return await this.pollsService.rejoinPoll({
+            name: "from token",
+            pollID: 'Also from token',
+            userID: 'Guess where this comes from?',
+        });
     }
 }
