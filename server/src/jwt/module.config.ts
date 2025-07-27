@@ -9,5 +9,5 @@ export const jwtModule = JwtModule.registerAsync({
             expiresIn: parseInt(configService.get<string>('POLL_DURATION') || '7200')
         },
     }),
-    inject: [ConfigModule],
+    inject: [ConfigService],
 });
