@@ -8,7 +8,9 @@
   "author": "Abdallah Salah",
   "scripts": {
     "client:dev": "npm run --workspace=client dev",
-    "server:dev": "npm run --workspace=server start:dev"
+    "server:dev": "npm run --workspace=server start:dev",
+    "start": "concurrently 'npm:docker:compose' 'npm:derver:dev' 'npm:client:dev'",
+    "stop": "docker-compose down"
   },
   "dependencies": {
     "@types/webpack": "^5.28.5",
