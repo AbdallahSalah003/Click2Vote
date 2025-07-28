@@ -10,6 +10,7 @@ import { Poll } from "shared";
 import { AddNominationFields } from "src/types/servcie-types/add-nomination.type";
 import { createNominationID } from '../utils/generate-ids';
 import { SubmitRankingsFields } from "src/types/servcie-types/submit-rankings.type";
+import getResults from "src/utils/getResults";
 
 @Injectable()
 export class PollsService {
@@ -124,5 +125,17 @@ export class PollsService {
             );
         }
         return this.pollsRepository.addParticipantRankings(rankingsData);
+    }
+
+    async computeResults(pollID: string): Promise<Poll> {
+        const poll = await this.pollsRepository.getPoll(pollID);
+
+        const results = getResults(poll.rankings, poll.nominations, poll.votesPerVoter);
+
+        return this.pollsRepository.addResults(pollID, results);
+    }
+
+    async cancelPoll(pollID: string): Promise<void> {
+        return this.pollsRepository.deletePoll(pollID);
     }
 }

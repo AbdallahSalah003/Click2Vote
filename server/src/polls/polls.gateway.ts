@@ -144,4 +144,31 @@ export class PollsGateway
 
         this.io.to(client.pollID).emit(WsEmit.WS_POLL_UPDATED, updatedPoll);
     }
+
+    @UseGuards(GatewayAdminGuard)
+    @SubscribeMessage(WsMsg.WS_CLOSE_POLL) 
+    async closePoll(
+        @ConnectedSocket() client: SocketWithAuth
+    ): Promise<void> {
+        this.logger.log(
+            `Closing poll ${client.pollID} and computing results`
+        );
+        const updatedPoll = await this.pollsService.computeResults(client.pollID);
+
+        this.io.to(client.pollID).emit(WsEmit.WS_POLL_UPDATED, updatedPoll);
+    }
+
+    @UseGuards(GatewayAdminGuard)
+    @SubscribeMessage(WsMsg.WS_CANCEL_POLL) 
+    async cancelPoll(
+        @ConnectedSocket() client: SocketWithAuth
+    ): Promise<void> {
+        this.logger.log(
+            `Canceling poll ${client.pollID}`
+        );
+        await this.pollsService.cancelPoll(client.pollID);
+
+        this.io.to(client.pollID).emit(WsEmit.WS_POLL_CANCELED);
+    }
+
 }

@@ -3,7 +3,7 @@ import { ConfigService } from "@nestjs/config";
 import Redis from "ioredis";
 import { IORedisKey } from "src/redis/redis.module";
 import { CreatePollData } from "src/types/repository-types/create-poll.type";
-import { Poll } from 'shared'
+import { Poll, Results } from 'shared'
 import { AddParticipantData } from "src/types/repository-types/add-participant.type";
 import { AddNominationData } from "src/types/repository-types/add-nomination.type";
 import { AddParticipantRankingsData } from "src/types/repository-types/add-participantRankingsData.type";
@@ -34,6 +34,7 @@ export class PollsRepository {
             adminID: userID,
             nominations: {},
             rankings: {},
+            results: [],
             hasStarted: false
         };
         this.logger.log(
@@ -222,4 +223,49 @@ export class PollsRepository {
             
         }
     }
+
+    async addResults(pollID: string, results: Results): Promise<Poll> {
+    this.logger.log(
+      `Attempting to add results to pollID: ${pollID}`,
+      JSON.stringify(results),
+    );
+
+    const key = `polls:${pollID}`;
+    const resultsPath = `.results`;
+
+    try {
+      await this.redisClient.call(
+        'JSON.SET',
+        key,
+        resultsPath,
+        JSON.stringify(results),
+      );
+
+      return this.getPoll(pollID);
+    } catch (e) {
+      this.logger.error(
+        `Failed to add add results for pollID: ${pollID}`,
+        results,
+        e,
+      );
+      throw new InternalServerErrorException(
+        `Failed to add add results for pollID: ${pollID}`,
+      );
+    }
+  }
+
+  async deletePoll(pollID: string): Promise<void> {
+    const key = `polls:${pollID}`;
+
+    this.logger.log(`deleting poll: ${pollID}`);
+
+    try {
+      await this.redisClient.call('JSON.DEL', key);
+    } catch (e) {
+      this.logger.error(`Failed to delete poll: ${pollID}`, e);
+      throw new InternalServerErrorException(
+        `Failed to delete poll: ${pollID}`,
+      );
+    }
+  }
 }
