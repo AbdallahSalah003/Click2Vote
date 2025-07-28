@@ -1,5 +1,5 @@
 import { Injectable, Logger } from "@nestjs/common";
-import { createPollId, createUserID } from "src/generate-ids";
+import { createPollId, createUserID } from "src/utils/generate-ids";
 import { CreatePollFields } from "src/types/servcie-types/create-poll.type";
 import { JoinPollFields } from "src/types/servcie-types/join-poll.type";
 import { RejoinPollFields } from "src/types/servcie-types/rejoin-poll.type";
