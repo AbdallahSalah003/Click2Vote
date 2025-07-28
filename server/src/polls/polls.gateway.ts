@@ -5,7 +5,8 @@ import { Namespace } from 'socket.io';
 import { SocketWithAuth } from 'src/types/auth-payload.type';
 import { WsCatchEverythingFilter } from 'src/exceptions/catch-all-filter';
 import { GatewayAdminGuard } from 'src/guards/admin-gateway.guard';
-import { WsEmit } from 'src/enums/socket.enum';
+import { WsEmit, WsMsg } from 'src/enums/socket.enum';
+import { NominationDto } from 'src/dtos/nomination.dto';
 
 @UsePipes(new ValidationPipe())
 @UseFilters(new WsCatchEverythingFilter())
@@ -63,7 +64,7 @@ export class PollsGateway
     }
 
     @UseGuards(GatewayAdminGuard)
-    @SubscribeMessage('remove_participant')
+    @SubscribeMessage(WsMsg.WS_REMOVE_PARTICIPANT)
     async removeParticipant(
         @MessageBody('id') id: string,
         @ConnectedSocket() client: SocketWithAuth
@@ -80,5 +81,40 @@ export class PollsGateway
             this.io.to(client.pollID).emit(WsEmit.WS_POLL_UPDATED, updatedPoll);
         }
     }
+
+    @SubscribeMessage(WsMsg.WS_NOMINATE)
+    async nominate(
+        @MessageBody() nomination: NominationDto,
+        @ConnectedSocket() client: SocketWithAuth
+    ): Promise<void> {
+        this.logger.debug(
+            `Attempting to add nomination for user ${client.userID} to poll ${client.pollID}\n${nomination.text}`
+        );
+
+        const updatedPoll = await this.pollsService.addNomination({
+            pollID: client.pollID,
+            userID: client.userID,
+            text: nomination.text
+        });
+
+        this.io.to(client.pollID).emit(WsEmit.WS_POLL_UPDATED, updatedPoll);
+    }
     
+    @UseGuards(GatewayAdminGuard)
+    @SubscribeMessage(WsMsg.WS_REMOVE_NOMINATION) 
+    async removeNomination(
+        @MessageBody('id') nominationID: string,
+        @ConnectedSocket() client: SocketWithAuth
+    ): Promise<void> {
+        this.logger.debug(
+            `Attempting to remove nomination ${nominationID} from poll ${client.pollID}`
+        );
+
+        const updatedPoll = await this.pollsService.removeNomination(
+            client.pollID,
+            nominationID
+        );
+
+        this.io.to(client.pollID).emit(WsEmit.WS_POLL_UPDATED, updatedPoll);
+    }
 }

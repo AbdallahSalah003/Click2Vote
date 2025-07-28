@@ -5,6 +5,8 @@ import { IORedisKey } from "src/redis/redis.module";
 import { CreatePollData } from "src/types/repository-types/create-poll.type";
 import { Poll } from 'shared'
 import { AddParticipantData } from "src/types/repository-types/add-participant.type";
+import { Nomination } from 'shared';
+import { AddNominationData } from "src/types/repository-types/add-nomination.type";
 
 @Injectable()
 export class PollsRepository {
@@ -30,6 +32,7 @@ export class PollsRepository {
             votesPerVoter,
             participants: {},
             adminID: userID,
+            nominations: {},
             hasStarted: false
         };
         this.logger.log(
@@ -113,5 +116,58 @@ export class PollsRepository {
             throw new InternalServerErrorException('Failed to remove participant');
         }
     }
+    async addNomination({
+        pollID,
+        nominationID,
+        nomination
+    }: AddNominationData): Promise<Poll> {
+        this.logger.log(
+            `Attempting to add a nomination with nominationID ${nominationID} 
+                and nomination ${nomination} to the pollID ${pollID}`
+        );
 
+        const key = `polls:${pollID}`;
+        const nominationPath = `.nominations.${nominationID}`;
+
+        try {
+            await this.redisClient.call(
+                'JSON.SET',
+                key,
+                nominationPath,
+                JSON.stringify(nomination)
+            );
+            return this.getPoll(pollID);
+        } catch (error) {
+            this.logger.error(
+                `Failed to add a nomination with nominationID/text: ${nominationID}/
+                    ${nomination.text} to pollID ${pollID}`
+            );
+            throw new InternalServerErrorException(
+                `Failed to add a nomination with nominationID/text: ${nominationID}/
+                    ${nomination.text} to pollID ${pollID}`
+            );
+        }
+    }
+    async removeNomination(pollID: string, nominationID: string): Promise<Poll> {
+        this.logger.log(
+            `removing nominationID ${nominationID} from poll ${pollID}`
+        );
+        const key = `polls:${pollID}`;
+        const nominationPath = `.nominations.${nominationID}`;
+
+        try {
+            await this.redisClient.call('JSON.DEL', key, nominationPath);
+
+            return this.getPoll(pollID);
+        } catch (error) {
+            this.logger.error(
+                `Failed to remove a nomination with nominationID ${nominationID}
+                    from pollID ${pollID}`
+            );
+            throw new InternalServerErrorException(
+                `Failed to remove a nomination with nominationID ${nominationID}
+                    from pollID ${pollID}`
+            );
+        }
+    }
 }
