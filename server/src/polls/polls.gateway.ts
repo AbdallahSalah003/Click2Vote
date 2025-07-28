@@ -117,4 +117,31 @@ export class PollsGateway
 
         this.io.to(client.pollID).emit(WsEmit.WS_POLL_UPDATED, updatedPoll);
     }
+
+    @UseGuards(GatewayAdminGuard)
+    @SubscribeMessage(WsMsg.WS_START_VOTE)
+    async startVote(@ConnectedSocket() client: SocketWithAuth): Promise<void> {
+        this.logger.debug(`Attempting to start voting for poll: ${client.pollID}`);
+
+        const updatedPoll = await this.pollsService.startPoll(client.pollID);
+
+        this.io.to(client.pollID).emit(WsEmit.WS_POLL_UPDATED, updatedPoll);
+    }
+
+    @SubscribeMessage(WsMsg.WS_SUBMIT_RANKINGS) 
+    async submitRankings(
+        @MessageBody('rankings') rankings: string[],
+        @ConnectedSocket() client: SocketWithAuth
+    ): Promise<void> {
+        this.logger.log(
+            `Submitting votes for userID's ${client.userID} rankings for pollID ${client.pollID}`, rankings
+        );
+        const updatedPoll = await this.pollsService.submitRankings({
+            pollID: client.pollID,
+            userID: client.userID,
+            rankings
+        });
+
+        this.io.to(client.pollID).emit(WsEmit.WS_POLL_UPDATED, updatedPoll);
+    }
 }

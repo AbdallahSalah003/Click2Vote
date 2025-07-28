@@ -1,4 +1,4 @@
-import { Injectable, Logger } from "@nestjs/common";
+import { BadRequestException, Injectable, Logger } from "@nestjs/common";
 import { createPollId, createUserID } from "src/utils/generate-ids";
 import { CreatePollFields } from "src/types/servcie-types/create-poll.type";
 import { JoinPollFields } from "src/types/servcie-types/join-poll.type";
@@ -9,6 +9,7 @@ import { AddParticipantFields } from "src/types/servcie-types/poll-participant.t
 import { Poll } from "shared";
 import { AddNominationFields } from "src/types/servcie-types/add-nomination.type";
 import { createNominationID } from '../utils/generate-ids';
+import { SubmitRankingsFields } from "src/types/servcie-types/submit-rankings.type";
 
 @Injectable()
 export class PollsService {
@@ -109,5 +110,19 @@ export class PollsService {
     }
     async removeNomination(pollID: string, nominationID: string): Promise<Poll> {
         return this.pollsRepository.removeNomination(pollID, nominationID);
+    }
+
+    async startPoll(pollID: string): Promise<Poll> {
+        return this.pollsRepository.startPoll(pollID);
+    }
+
+    async submitRankings(rankingsData: SubmitRankingsFields): Promise<Poll> {
+        const hasPollStarted = this.pollsRepository.getPoll(rankingsData.pollID);
+        if(!hasPollStarted) {
+            throw new BadRequestException(
+                `Participants cannot start voting until the poll has started`
+            );
+        }
+        return this.pollsRepository.addParticipantRankings(rankingsData);
     }
 }

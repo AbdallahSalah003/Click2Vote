@@ -1,6 +1,6 @@
 export type Participants = {
   [participantID: string]: string;
-}
+};
 
 export type Poll = {
   id: string;
@@ -9,17 +9,20 @@ export type Poll = {
   participants: Participants;
   adminID: string;
   nominations: Nominations;
-  // rankings: Rankings;
+  rankings: Rankings;
   // results: Results;
   hasStarted: boolean;
-}
+};
 
 export type Nomination = {
   userID: string;
   text: string;
 }
+export type Rankings = {
+  [userID: string]: NominationID[]
+};
 
-
+type NominationID = string;
 export type Nominations = {
-  [nominationID: string]: Nomination;
-}
+  [nominationID: NominationID]: Nomination;
+};

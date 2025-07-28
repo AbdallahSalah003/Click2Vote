@@ -6,5 +6,7 @@ export enum WsEmit {
 export enum WsMsg {
     WS_NOMINATE = 'nominate',
     WS_REMOVE_PARTICIPANT = 'remove_participant',
-    WS_REMOVE_NOMINATION = 'remove_nomination'
+    WS_REMOVE_NOMINATION = 'remove_nomination',
+    WS_START_VOTE = 'start_vote',
+    WS_SUBMIT_RANKINGS = 'submit_rankings'
 }
