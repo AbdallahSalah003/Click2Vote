@@ -1,8 +1,10 @@
-import { Logger } from '@nestjs/common'
+import { Logger, UsePipes, ValidationPipe } from '@nestjs/common'
 import { OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit, WebSocketGateway, WebSocketServer } from '@nestjs/websockets'
 import { PollsService } from './polls.service'
-import { Socket, Namespace } from 'socket.io';
+import { Namespace } from 'socket.io';
+import { SocketWithAuth } from 'src/types/auth-payload.type';
 
+@UsePipes(new ValidationPipe())
 @WebSocketGateway({
     namespace: 'polls',
 })
@@ -17,16 +19,26 @@ export class PollsGateway
     afterInit(server: any): void {
         this.logger.log('Websocket Gateway initialized.')
     }
-    handleConnection(client: Socket) {
+    handleConnection(client: SocketWithAuth) {
         const sockets = this.io.sockets;
+
+        this.logger.debug(
+            `Socket connected with userID: ${client.userID}, pollID: ${client.pollID}
+            , and name: ${client.name}`
+        );
 
         this.logger.log(`WS Client with id: ${client.id} connected`);
         this.logger.debug(`Number of connected sockets: ${sockets.size}`);
 
         this.io.emit('hello', `from client: ${client.id} after he connected`);
     }
-    handleDisconnect(client: Socket) {
+    handleDisconnect(client: SocketWithAuth) {
         const sockets = this.io.sockets;
+        
+        this.logger.debug(
+            `Socket disconnected with userID: ${client.userID}, pollID: ${client.pollID}
+            , and name: ${client.name}`
+        );
 
         this.logger.log(`WS Client with id: ${client.id} disconnected`);
         this.logger.debug(`Number of connected sockets: ${sockets.size}`);
