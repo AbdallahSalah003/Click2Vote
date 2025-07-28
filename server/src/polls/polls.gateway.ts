@@ -1,9 +1,11 @@
-import { Logger, UnauthorizedException, UseFilters, UsePipes, ValidationPipe } from '@nestjs/common'
-import { OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit, SubscribeMessage, WebSocketGateway, WebSocketServer, WsException } from '@nestjs/websockets'
+import { Logger, UnauthorizedException, UseFilters, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common'
+import { ConnectedSocket, MessageBody, OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit, SubscribeMessage, WebSocketGateway, WebSocketServer, WsException } from '@nestjs/websockets'
 import { PollsService } from './polls.service'
 import { Namespace } from 'socket.io';
 import { SocketWithAuth } from 'src/types/auth-payload.type';
 import { WsCatchEverythingFilter } from 'src/exceptions/catch-all-filter';
+import { GatewayAdminGuard } from 'src/guards/admin-gateway.guard';
+import { WsEmit } from 'src/enums/socket.enum';
 
 @UsePipes(new ValidationPipe())
 @UseFilters(new WsCatchEverythingFilter())
@@ -39,7 +41,7 @@ export class PollsGateway
             name: client.name
         });
         
-        this.io.to(roomName).emit('poll_updated', updatedPoll);
+        this.io.to(roomName).emit(WsEmit.WS_POLL_UPDATED, updatedPoll);
     }
     async handleDisconnect(client: SocketWithAuth) {
         const sockets = this.io.sockets;
@@ -55,14 +57,28 @@ export class PollsGateway
             `Total clients connected to room ${roomName}: ${clientCount}`
         );
         if(updatedPoll) {
-            this.io.to(roomName).emit('poll_updated', updatedPoll);
+            this.io.to(roomName).emit(WsEmit.WS_POLL_UPDATED, updatedPoll);
         }
 
     }
 
-    @SubscribeMessage('test')
-    async test() {
-        throw new UnauthorizedException({field: 'field', message: 'You screwed up'});
+    @UseGuards(GatewayAdminGuard)
+    @SubscribeMessage('remove_participant')
+    async removeParticipant(
+        @MessageBody('id') id: string,
+        @ConnectedSocket() client: SocketWithAuth
+    ) {
+        this.logger.debug(`
+            Attempting to remove participant ${id} from poll ${client.pollID}
+        `);
+
+        const updatedPoll = await this.pollsService.removeParticipant(
+            client.pollID,
+            id,
+        );
+        if(updatedPoll) {
+            this.io.to(client.pollID).emit(WsEmit.WS_POLL_UPDATED, updatedPoll);
+        }
     }
     
 }

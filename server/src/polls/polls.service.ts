@@ -75,6 +75,9 @@ export class PollsService {
 
         return joinedPoll;
     }
+    async getPoll(pollID: string): Promise<Poll> {
+        return this.pollsRepository.getPoll(pollID);
+    }
     async addParticipants(addParticipant: AddParticipantFields): Promise<Poll> {
         return this.pollsRepository.addParticipant(addParticipant);
     }
