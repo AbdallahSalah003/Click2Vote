@@ -61,14 +61,10 @@ export class PollsRepository {
 
             this.logger.verbose(currentPoll);
 
-            if (!currentPoll || typeof currentPoll !== 'string') {
-                throw new InternalServerErrorException('Poll data is missing or corrupted');
-            }
-
             return JSON.parse(currentPoll);
         } catch (e) {
             this.logger.error(`Failed to get pollID ${pollID}: ${e.message}`);
-            throw e;
+            throw new InternalServerErrorException('Poll data is missing or corrupted');
         }
     }
 
@@ -98,7 +94,7 @@ export class PollsRepository {
             this.logger.error(
                 `Failed to add a participant with userID/name: ${userID}/${name} to pollID: ${pollID}`,
             );
-            throw e;
+            throw new InternalServerErrorException('Failed to add participant');
         }
     }
 

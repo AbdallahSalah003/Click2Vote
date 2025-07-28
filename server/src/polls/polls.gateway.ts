@@ -21,32 +21,43 @@ export class PollsGateway
     afterInit(server: any): void {
         this.logger.log('Websocket Gateway initialized.')
     }
-    handleConnection(client: SocketWithAuth) {
+    async handleConnection(client: SocketWithAuth) {
         const sockets = this.io.sockets;
 
+        const roomName = client.pollID;
+        await client.join(roomName);
+        const connectedClients = this.io.adapter.rooms?.get(roomName)?.size ?? 0;
         this.logger.debug(
-            `Socket connected with userID: ${client.userID}, pollID: ${client.pollID}
-            , and name: ${client.name}`
+            `userID ${client.userID} joined romm with name ${roomName}`
         );
-
-        this.logger.log(`WS Client with id: ${client.id} connected`);
-        this.logger.debug(`Number of connected sockets: ${sockets.size}`);
-
-        this.io.emit('hello', `from client: ${client.id} after he connected`);
-    }
-    handleDisconnect(client: SocketWithAuth) {
-        const sockets = this.io.sockets;
+        this.logger.debug(
+            `Total clients connect to room ${roomName}: ${connectedClients}`
+        );
+        const updatedPoll = await this.pollsService.addParticipants({
+            pollID: client.pollID,
+            userID: client.userID,
+            name: client.name
+        });
         
-        this.logger.debug(
-            `Socket disconnected with userID: ${client.userID}, pollID: ${client.pollID}
-            , and name: ${client.name}`
+        this.io.to(roomName).emit('poll_updated', updatedPoll);
+    }
+    async handleDisconnect(client: SocketWithAuth) {
+        const sockets = this.io.sockets;
+        const updatedPoll = await this.pollsService.removeParticipant(
+            client.pollID,
+            client.userID
         );
-
-        this.logger.log(`WS Client with id: ${client.id} disconnected`);
+        const roomName = client.pollID;
+        const clientCount = this.io.adapter.rooms?.get(roomName)?.size ?? 0;
+        this.logger.log(`Disconnected socket id: ${client.id}`);
         this.logger.debug(`Number of connected sockets: ${sockets.size}`);
+        this.logger.debug(
+            `Total clients connected to room ${roomName}: ${clientCount}`
+        );
+        if(updatedPoll) {
+            this.io.to(roomName).emit('poll_updated', updatedPoll);
+        }
 
-        // TODO: remove client from poll and send 'participants_updated' event to 
-        // remaining clients
     }
 
     @SubscribeMessage('test')
