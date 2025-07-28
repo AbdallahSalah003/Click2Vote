@@ -92,24 +92,7 @@ export class PollsRepository {
                 JSON.stringify(name),
             );
 
-            const pollJSON = await this.redisClient.call(
-                'JSON.GET',
-                key,
-                '.',
-            ) as string;
-            
-            if (!pollJSON || typeof pollJSON !== 'string') {
-                throw new InternalServerErrorException('Poll data is missing or corrupted');
-            }
-
-            const poll = JSON.parse(pollJSON) as Poll;
-
-            this.logger.debug(
-                `Current Participants for pollID: ${pollID}:`,
-                poll.participants,
-            );
-
-            return poll;
+            return this.getPoll(pollID);
         } catch (e) {
             this.logger.error(
                 `Failed to add a participant with userID/name: ${userID}/${name} to pollID: ${pollID}`,
