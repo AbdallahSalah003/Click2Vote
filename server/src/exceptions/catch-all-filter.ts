@@ -1,6 +1,6 @@
 import { ArgumentsHost, ExceptionFilter, Catch, BadRequestException, UnauthorizedException } from "@nestjs/common";
 import { SocketWithAuth } from "src/types/auth-payload.type";
-import { WsBadRequestException, WsUnauthorizedException, WsUnknownException } from "./ws-exceptions";
+import { WsBadRequestException, WsTypeException, WsUnauthorizedException, WsUnknownException } from "./ws-exceptions";
 import { WsEmit } from "src/enums/socket.enum";
 
 @Catch()
@@ -20,6 +20,11 @@ export class WsCatchEverythingFilter implements ExceptionFilter {
             const exceptionMessage = exceptionData['message'] ?? exceptionData ?? 'Unauthorized';
             const wsException = new WsUnauthorizedException(exceptionMessage);
             socket.emit(WsEmit.WS_EXCEPTION, wsException.getError());
+            return;
+        }
+
+        if(exception instanceof WsTypeException) {
+            socket.emit(WsEmit.WS_EXCEPTION, exception.getError());
             return;
         }
         const wsException = new WsUnknownException(exception.message);
