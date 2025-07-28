@@ -1,10 +1,12 @@
-import { Logger, UsePipes, ValidationPipe } from '@nestjs/common'
-import { OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit, WebSocketGateway, WebSocketServer } from '@nestjs/websockets'
+import { BadRequestException, Logger, UnauthorizedException, UseFilters, UsePipes, ValidationPipe } from '@nestjs/common'
+import { OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit, SubscribeMessage, WebSocketGateway, WebSocketServer, WsException } from '@nestjs/websockets'
 import { PollsService } from './polls.service'
 import { Namespace } from 'socket.io';
 import { SocketWithAuth } from 'src/types/auth-payload.type';
+import { WsCatchEverythingFilter } from 'src/exceptions/catch-all-filter';
 
 @UsePipes(new ValidationPipe())
+@UseFilters(new WsCatchEverythingFilter())
 @WebSocketGateway({
     namespace: 'polls',
 })
@@ -45,6 +47,11 @@ export class PollsGateway
 
         // TODO: remove client from poll and send 'participants_updated' event to 
         // remaining clients
+    }
+
+    @SubscribeMessage('test')
+    async test() {
+        throw new UnauthorizedException({field: 'field', message: 'You screwed up'});
     }
     
 }
