@@ -29,7 +29,8 @@ export class PollsRepository {
             topic,
             votesPerVoter,
             participants: {},
-            adminID: userID
+            adminID: userID,
+            hasStarted: false
         };
         this.logger.log(
             `Creating new poll: ${JSON.stringify(initialPoll, null, 2)} with TTL
@@ -101,6 +102,20 @@ export class PollsRepository {
         }
     }
 
+    async removeParticipant(pollID: string, userID: string): Promise<Poll> {
+        this.logger.log(`removing userID ${userID} from poll ${pollID}`);
 
+        const key = `polls:${pollID}`;
+        const participantPath = `.participants.${userID}`;
+
+        try {
+            await this.redisClient.call('JSON.DEL', key, participantPath);
+
+            return this.getPoll(pollID);
+        } catch (error) {
+            this.logger.log(`Failed to remove userID: ${userID} from poll ${pollID}`, error);
+            throw new InternalServerErrorException('Failed to remove participant');
+        }
+    }
 
 }
