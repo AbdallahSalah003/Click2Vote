@@ -1,11 +1,14 @@
-import { Button } from "../components/button";
+import { useNavigate } from "react-router-dom";
+import { Button } from "../components/Button";
 
 export function WelcomePage() {
+    const navigate = useNavigate();
+
     const handleClickCreatePoll = () => {
-        console.log('Create new poll!');
+        navigate('/create');
     };
     const handleClickJoinPoll = () => {
-        console.log('Join existing poll!');
+        navigate('/join');
     };
 
 
