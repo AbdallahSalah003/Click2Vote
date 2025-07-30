@@ -3,6 +3,10 @@ import { Button } from "../components/Button";
 import { Counter } from "../components/Counter";
 import { TextField } from "../components/Input";
 import { useNavigate } from '../../../node_modules/react-router-dom/dist/index';
+import { makeRequest } from "../api";
+import { Poll } from 'shared';
+import { jwtDecode } from 'jwt-decode';
+import Cookies from "js-cookie";
 
 export function CreatePollPage() {
     const [errorMessage, setErrorMessage] = useState('');
@@ -23,7 +27,36 @@ export function CreatePollPage() {
     const handleClickCreatePoll = async () => {
         if(areFieldsValid()) {
             setErrorMessage('');
-            navigate('/waiting-room');
+            const { data, error } = await makeRequest<{
+                poll: Poll;
+                accessToken: string;
+            }>('/polls', {
+                method: 'POST',
+                credentials: 'include',
+                body: JSON.stringify({
+                    topic: pollTopic,
+                    votesPerVoter: maxVotes,
+                    name,
+                }),
+            });
+
+            console.log(data, error);
+
+            if (error && error.statusCode === 400) {
+                console.log('400 error', error);
+                setErrorMessage('Name and poll topic are both required!');
+            } else if (error && error.statusCode !== 400) {
+                setErrorMessage(error.messages[0]);
+            } else {
+                const jwt_hp = Cookies.get('jwt_hp');
+                console.log(jwt_hp);
+                if (jwt_hp) {
+                    const userInfo = jwtDecode(jwt_hp); 
+                    console.log(userInfo);
+                }
+
+                navigate('/waiting-room');
+            }
         }
         else {
              setErrorMessage('Please fill in both the poll topic and your name.');
