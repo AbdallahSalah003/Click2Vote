@@ -20,13 +20,19 @@ export class SetAccessTokenInterceptor implements NestInterceptor {
           const [header, payload, signature] = accessToken.split('.');
           response.cookie('jwt_hp', `${header}.${payload}`, {
             httpOnly: false,
-            secure: true,
-            sameSite: 'strict',
+            secure: false,
+            sameSite: 'lax',
+            expires: new Date(Date.now() + 1000 * 60 * 60 * 24), 
+            domain: '127.0.0.1',
+            path: '/',
           });
           response.cookie('jwt_sig', signature, {
-            httpOnly: true,
-            secure: true,
-            sameSite: 'strict',
+            httpOnly: false,
+            secure: false,
+            sameSite: 'lax',
+            expires: new Date(Date.now() + 1000 * 60 * 60 * 24), 
+            domain: '127.0.0.1', 
+            path: '/',
           });
 
           delete data.accessToken;
