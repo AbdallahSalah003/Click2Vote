@@ -1,25 +1,26 @@
-import { useNavigate } from "react-router-dom";
-import { Button } from "../components/Button";
+import React from 'react';
+import { actions, AppPage } from '../state';
 
-export function WelcomePage() {
-    const navigate = useNavigate();
+const Welcome: React.FC = () => {
+  return (
+    <div >
+      <h1 style={{"margin": "50px", "textAlign":"center", "fontWeight": "bold", "fontSize": "60px"}}>Welcome to Click2Vote</h1>
+      <div style={{"textAlign": "center"}}>
+        <button style={{"margin": "20px"}}
+          className="box btn-orange my-2"
+          onClick={() => actions.setPage(AppPage.Create)}
+        >
+          Create New Poll
+        </button>
+        <button
+          className="box btn-purple my-2"
+          onClick={() => actions.setPage(AppPage.Join)}
+        >
+          Join Existing Poll
+        </button>
+      </div>
+    </div>
+  );
+};
 
-    const handleClickCreatePoll = () => {
-        navigate('/create');
-    };
-    const handleClickJoinPoll = () => {
-        navigate('/join');
-    };
-
-
-    return (
-        <>
-            <h1>Click2Vote</h1><h1> A Lightweight, Real-Time Voting</h1><h1>Platform for 
-                Creating Polls
-            </h1>
-            <Button title="Create New Poll" onClickHandler={handleClickCreatePoll}/>
-            <br /> <br />
-            <Button title="Join Existing Poll" onClickHandler={handleClickJoinPoll}/>
-        </>
-    );
-}
+export default Welcome;

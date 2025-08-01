@@ -12,7 +12,7 @@ async function bootstrap() {
   const clientPort = parseInt(configService.get('CLIENT_PORT') || '5173');
   app.enableCors({
     origin: [
-      `http://127.0.0.1:${clientPort}`,
+      `http://localhost:${clientPort}`,
       new RegExp(`/^http:\/\/192\.168\.1\.([1-9][1-9]\d):${clientPort}$/`),
     ],
     credentials: true

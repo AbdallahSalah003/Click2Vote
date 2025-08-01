@@ -4,11 +4,9 @@ import { CreatePollDto } from "src/dtos/polls.dto";
 import { PollsService } from "./polls.service";
 import { AuthGuard } from "src/guards/auth.guard";
 import { RequestWithAuth } from "../types/auth-payload.type"
-import { SetAccessTokenInterceptor } from "src/interceptors/auth.interceptor";
 
 @Controller('polls')
 @UsePipes(ValidationPipe)
-@UseInterceptors(SetAccessTokenInterceptor)
 export class PollsController {
     constructor(private readonly pollsService: PollsService) {}
     @Post()

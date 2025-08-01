@@ -1,0 +1,17 @@
+.enter {
+  top: 100%;
+}
+
+.enter-active {
+  top: 4rem; /* top-16 is 4rem */
+  transition: top 300ms ease-in-out;
+}
+
+.exit {
+  top: 4rem; /* top-16 is 4rem */
+}
+
+.exit-active {
+  top: 100%;
+  transition: top 300ms ease-in-out;
+}

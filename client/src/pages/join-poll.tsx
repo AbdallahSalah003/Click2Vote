@@ -1,85 +1,101 @@
-import { useEffect, useState } from "react";
-import { Button } from "../components/Button";
-import { TextField } from "../components/Input";
-import { useNavigate } from "react-router-dom";
-import { makeRequest } from "../api";
-import { Poll } from "shared";
-import { set } from "js-cookie";
-import Cookies from "js-cookie";
-import { jwtDecode } from "jwt-decode";
+import React, { useState } from 'react';
+import { Poll } from 'shared';
+import { makeRequest } from '../api';
+import { actions, AppPage } from '../state';
 
-export function JoinPollPage() {
-    const [errorMessage, setErrorMessage] = useState('');
-    const [name, setName] = useState('');
-    const [pollCode, setPollCode] = useState('');
-    const navigate = useNavigate();
+const Join: React.FC = () => {
+  const [pollID, setPollID] = useState('');
+  const [name, setName] = useState('');
+  const [apiError, setApiError] = useState('');
 
-    useEffect(() => {
-        if(name.trim() && pollCode.trim()) {
-            setErrorMessage('');
-        }
-    }, [name, pollCode])
+  const areFieldsValid = (): boolean => {
+    if (pollID.length < 6 || pollID.length > 6) {
+      return false;
+    }
 
-    const isValidFields = (): boolean => {
-        return pollCode.trim().length>0 && name.trim().length>0;
+    if (name.length < 1 || name.length > 25) {
+      return false;
     }
-    const handleOnChangeCode = (e: React.ChangeEvent<HTMLInputElement>) =>  {
-        setPollCode(e.target.value);
-    }
-    const handleOnChangeName = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setName(e.target.value);
-    }
-    const handleClickJoinPoll = async () => {
-        if(isValidFields()) {
-            setErrorMessage('');
 
-            const {data, error} = await makeRequest<{
-                poll: Poll;
-                accessToken: string;
-            }>('/polls/join', {
-                method: 'POST',
-                credentials: 'include',
-                body: JSON.stringify({
-                    pollID: pollCode.toUpperCase(),
-                    name
-                })
-            });
-            console.log(data, error);
-            if(error && error.statusCode == 500) {
-                setErrorMessage('Poll does not exist, please enter a valid poll code')
-            }
-            else {
-                const jwt_hp = Cookies.get('jwt_hp');
-                console.log(jwt_hp);
-                if (jwt_hp) {
-                    const userInfo = jwtDecode(jwt_hp); 
-                    console.log(userInfo);
-                }
-                
-                navigate('/waiting-room');
-            }
-        }
-        else {
-            setErrorMessage('Poll Code and Name must be provided to join a poll')
-        }
-    }
-    const handleClickStartOver = () => {
+    return true;
+  };
 
+  const handleJoinPoll = async () => {
+    actions.startLoading();
+    setApiError('');
+
+    const { data, error } = await makeRequest<{
+      poll: Poll;
+      accessToken: string;
+    }>('/polls/join', {
+      method: 'POST',
+      body: JSON.stringify({
+        pollID,
+        name,
+      }),
+    });
+
+    if (error && error.statusCode === 400) {
+      setApiError('Please make sure to include a poll topic!');
+    } else if (error && !error.statusCode) {
+      setApiError('Unknown API error');
+    } else {
+      actions.initializePoll(data.poll);
+      actions.setPollAccessToken(data.accessToken);
+      actions.setPage(AppPage.WaitingRoom);
     }
-    return (
-        <>
-            <h2>Enter Poll Code</h2>
-            <TextField maxLength={100} placeholder="" onChange={handleOnChangeCode}/>
-            <h2>Enter Your Name</h2>
-            <TextField maxLength={25} placeholder="" onChange={handleOnChangeName}/>
-            {errorMessage && (
-                <p style={{ color: 'red', fontWeight: 'bold', marginBottom: '1rem' }}>
-                    {errorMessage}
-                </p>
-            )}
-            <br/><br/>
-            <Button title="Join" onClickHandler={handleClickJoinPoll}/>
-            <Button title="Start Over" onClickHandler={handleClickStartOver}/>
-        </>
-    );
-}
+
+    actions.stopLoading();
+  };
+
+  return (
+    <div style={{"textAlign": "center", "marginTop": "100px"}}>
+      <div >
+        <div>
+          <h3 >
+            Enter Code Provided by &quot;Friend&quot;
+          </h3>
+          <div className="text-center w-full">
+            <input
+              maxLength={6}
+              onChange={(e) => setPollID(e.target.value.toUpperCase())}
+              className="box info w-full"
+              autoCapitalize="characters"
+              style={{ textTransform: 'uppercase' }}
+            />
+          </div>
+        </div>
+        <div className="my-4">
+          <h3 className="text-center">Your Name</h3>
+          <div className="text-center w-full">
+            <input
+              maxLength={25}
+              onChange={(e) => setName(e.target.value)}
+              className="box info w-full"
+            />
+          </div>
+        </div>
+        {apiError && (
+          <p className="text-center text-red-600 font-light mt-8">{apiError}</p>
+        )}
+      </div>
+      <div className="my-12 flex flex-col justify-center items-center">
+        <button style={{"margin": "30px"}}
+          disabled={!areFieldsValid()}
+          className="box btn-orange w-32 my-2"
+          onClick={handleJoinPoll}
+        >
+          Join
+        </button>
+        <button
+          className="box btn-purple w-32 my-2"
+          onClick={() => actions.startOver()}
+        >
+          Start Over
+        </button>
+      </div>
+    </div>
+  );
+};
+
+export default Join;

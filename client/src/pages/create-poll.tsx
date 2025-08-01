@@ -1,103 +1,115 @@
-import { useEffect, useState } from "react";
-import { Button } from "../components/Button";
-import { Counter } from "../components/Counter";
-import { TextField } from "../components/Input";
-import { useNavigate } from '../../../node_modules/react-router-dom/dist/index';
-import { makeRequest } from "../api";
+import React, { useState } from 'react';
 import { Poll } from 'shared';
-import { jwtDecode } from 'jwt-decode';
-import Cookies from "js-cookie";
+import { makeRequest } from '../api';
+import CountSelector from '../components/ui/CountSelector';
+import { actions, AppPage } from '../state';
 
-export function CreatePollPage() {
-    const [errorMessage, setErrorMessage] = useState('');
-    const [pollTopic, setPollTopic] = useState('');
-    const [maxVotes, setMaxVotes] = useState(1);
-    const [name, setName] = useState('');
-    const navigate = useNavigate();
+const Create: React.FC = () => {
+  const [pollTopic, setPollTopic] = useState('');
+  const [maxVotes, setMaxVotes] = useState(3);
+  const [name, setName] = useState('');
+  const [apiError, setApiError] = useState('');
 
-    useEffect(() => {
-        if (name.trim() && pollTopic.trim()) {
-            setErrorMessage('');
-        }
-    }, [name, pollTopic]);  
+  const areFieldsValid = (): boolean => {
+    if (pollTopic.length < 1 || pollTopic.length > 100) {
+      return false;
+    }
 
-    const areFieldsValid = (): boolean => {
-        return name.trim().length > 0 && pollTopic.trim().length > 0;
+    if (maxVotes < 1 || maxVotes > 5) {
+      return false;
     }
-    const handleClickCreatePoll = async () => {
-        if(areFieldsValid()) {
-            setErrorMessage('');
-            const { data, error } = await makeRequest<{
-                poll: Poll;
-                accessToken: string;
-            }>('/polls', {
-                method: 'POST',
-                credentials: 'include',
-                body: JSON.stringify({
-                    topic: pollTopic,
-                    votesPerVoter: maxVotes,
-                    name,
-                }),
-            });
 
-            console.log(data, error);
+    if (name.length < 1 || name.length > 25) {
+      return false;
+    }
 
-            if (error && error.statusCode === 400) {
-                console.log('400 error', error);
-                setErrorMessage('Name and poll topic are both required!');
-            } else if (error && error.statusCode !== 400) {
-                setErrorMessage(error.messages[0]);
-            } else {
-                const jwt_hp = Cookies.get('jwt_hp');
-                console.log(jwt_hp);
-                if (jwt_hp) {
-                    const userInfo = jwtDecode(jwt_hp); 
-                    console.log(userInfo);
-                }
+    return true;
+  };
 
-                navigate('/waiting-room');
-            }
-        }
-        else {
-             setErrorMessage('Please fill in both the poll topic and your name.');
-        }
+  const handleCreatePoll = async () => {
+    actions.startLoading();
+    setApiError('');
+
+    const { data, error } = await makeRequest<{
+      poll: Poll;
+      accessToken: string;
+    }>('/polls', {
+      method: 'POST',
+      body: JSON.stringify({
+        topic: pollTopic,
+        votesPerVoter: maxVotes,
+        name,
+      }),
+    });
+
+    console.log(data, error);
+
+    if (error && error.statusCode === 400) {
+      console.log('400 error', error);
+      setApiError('Name and poll topic are both required!');
+    } else if (error && error.statusCode !== 400) {
+      setApiError(error.messages[0]);
+    } else {
+      actions.initializePoll(data.poll);
+      actions.setPollAccessToken(data.accessToken);
+      actions.setPage(AppPage.WaitingRoom);
     }
-    const handleClickStartOver = () => {
-        if(areFieldsValid()) {
-            setErrorMessage('');
-            navigate('/vote');
-        }
-        else {
-             setErrorMessage('Please fill in both the poll topic and your name.');
-        }
-    }
-    const handleOnChangeTopic = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setPollTopic(e.target.value);
-    }
-    const handleOnChangeName = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setName(e.target.value);
-    }
-    const handleOnClickPlusCounter = () => {
-        setMaxVotes(maxVotes+1);
-    }
-    const handleOnClickMinusCounter = () => {
-        setMaxVotes(maxVotes>1?maxVotes-1:maxVotes);
-    }
-    return (
-        <>
-            <h2>Enter Poll Topic</h2>
-            <TextField maxLength={100} placeholder="" onChange={handleOnChangeTopic}/>
-            <h2>Enter Your Name</h2>
-            <TextField maxLength={25} placeholder="" onChange={handleOnChangeName}/>
-            <h2>Votes Per Participant</h2>
-            <Counter count={maxVotes} onClickPlus={handleOnClickPlusCounter} onClickMinus={handleOnClickMinusCounter}/>
-            {errorMessage && (
-                <p style={{ color: 'red', fontWeight: 'bold', marginBottom: '1rem' }}>
-                    {errorMessage}
-                </p>
-            )}  
-            <Button title="Create" onClickHandler={handleClickCreatePoll}/>
-            <Button title="Start Over" onClickHandler={handleClickStartOver}/>
-        </> 
-    );
-}
+
+    actions.stopLoading();
+  };
+
+  return (
+    <div style={{"margin": "40px"}}>
+      <div className="mb-12">
+        <h3 className="text-center">Enter Poll Topic</h3>
+        <div className="text-center w-full">
+          <input
+            maxLength={100}
+            onChange={(e) => setPollTopic(e.target.value)}
+            className="box info w-full"
+          />
+        </div>
+        <h3 className="text-center mt-4 mb-2">Votes Per Participant</h3>
+        <div className="w-48 mx-auto my-4">
+          <CountSelector
+            min={1}
+            max={5}
+            initial={3}
+            step={1}
+            onChange={(val) => setMaxVotes(val)}
+          />
+        </div>
+        <div className="mb-12">
+          <h3 className="text-center">Enter Name</h3>
+          <div className="text-center w-full">
+            <input
+              maxLength={25}
+              onChange={(e) => setName(e.target.value)}
+              className="box info w-full"
+            />
+          </div>
+        </div>
+        {apiError && (
+          <p className="text-center text-red-600 font-light mt-8">{apiError}</p>
+        )}
+      </div>
+      <div className="flex flex-col justify-center items-center">
+        <button style={{"marginTop": "20px", "marginRight": "40px"}}
+          className="box btn-orange w-32 my-2"
+          onClick={handleCreatePoll}
+          disabled={!areFieldsValid()}
+        >
+          Create
+        </button>
+        <button
+          className="box btn-purple w-32 my-2"
+          onClick={() => actions.startOver()}
+        >
+          Start Over
+        </button>
+      </div>
+    </div>
+  );
+};
+
+export default Create;
