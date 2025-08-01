@@ -1,12 +1,20 @@
 # Click2Vote
 <h3><i>
-This project is a Real-Time Ranked-Choice Voting App that allows users to create polls, invite friends to participate, add nominations, cast their votes, and view the final results in real time.
+This project is a Real-Time Ranked-Choice Voting App that allows users to create polls, invite friends to participate, add nominations, cast their votes, and view the final results in real time. 
+
+
 </i></h3>
+[![Watch the demo](https://youtu.be/UyStdT6uVcY/0.jpg)](https://youtu.be/UyStdT6uVcY)
 
 ---
 
 ## Framework Design
 <img src="./assets/design.jpg" alt="design"/>
+
+---
+
+
+
 
 ---
 
