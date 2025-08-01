@@ -4,7 +4,7 @@ This project is a Real-Time Ranked-Choice Voting App that allows users to create
 
 
 </i></h3>
-[![Watch the demo](https://youtu.be/UyStdT6uVcY/0.jpg)](https://youtu.be/UyStdT6uVcY)
+▶️ [Watch the demo on YouTube](https://youtu.be/UyStdT6uVcY)
 
 ---
 
