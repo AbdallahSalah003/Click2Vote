@@ -6,12 +6,14 @@ import Join from './pages/join-poll';
 import { WaitingRoom } from './pages/wating-room';
 import Welcome from './pages/welcome';
 import { actions, AppPage, state } from './state';
+import { Voting } from './pages/voting';
 
 const routeConfig = {
   [AppPage.Welcome]: Welcome,
   [AppPage.Create]: Create,
   [AppPage.Join]: Join,
   [AppPage.WaitingRoom]: WaitingRoom,
+  [AppPage.Voting]: Voting,
 };
 
 const Pages: React.FC = () => {
@@ -33,6 +35,10 @@ const Pages: React.FC = () => {
       !currentState.poll?.hasStarted
     ) {
       actions.setPage(AppPage.WaitingRoom);
+    }
+
+    if(currentState.me?.id && currentState.poll?.hasStarted) {
+      actions.setPage(AppPage.Voting);
     }
   }, [currentState.me?.id, currentState.poll?.hasStarted]);
 
