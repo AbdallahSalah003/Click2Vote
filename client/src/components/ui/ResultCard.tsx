@@ -8,22 +8,50 @@ type ResultCard = {
 const ResultCard: React.FC<ResultCard> = ({ results }) => {
   return (
     <>
-      <div className="grid grid-cols-3 gap-4 pb-2 my-2 border-b-2 border-solid border-purple-70 pr-4">
-        <div className="col-span-2 font-semibold">Candidate</div>
-        <div className="col-span-1 font-semibold text-right">Score</div>
+    <div style={{"width": "20%"}}>
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(3, 1fr)',
+          gap: '1rem',
+          paddingBottom: '0.5rem',
+          marginTop: '0.5rem',
+          marginBottom: '0.5rem',
+          borderBottom: '2px solid #a277e4', // assuming tailwind's purple-70
+          paddingRight: '1rem',
+        }}
+      >
+        <div style={{ gridColumn: 'span 2', fontWeight: 600 }}>Candidate</div>
+        <div style={{ gridColumn: 'span 1', fontWeight: 600, textAlign: 'right' }}>Score</div>
       </div>
-      <div className="divide-y-2 overflow-y-auto pr-4">
+
+      <div
+        style={{
+          overflowY: 'auto',
+          paddingRight: '1rem',
+          borderTop: '2px solid transparent', // used for divide-y spacing
+        }}
+      >
         {results.map((result) => (
           <div
             key={result.nominationID}
-            className="grid grid-cols-3 gap-4 my-1 items-center"
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(3, 1fr)',
+              gap: '1rem',
+              marginTop: '0.25rem',
+              marginBottom: '0.25rem',
+              alignItems: 'center',
+              borderTop: '2px solid #e5e7eb', // tailwind's default divide color (gray-200)
+            }}
           >
-            <div className="col-span-2">{result.nominationText}</div>
-            <div className="col-span-1 text-right">
+            <div style={{ gridColumn: 'span 2' }}>{result.nominationText}</div>
+            <div style={{ gridColumn: 'span 1', textAlign: 'right' }}>
               {result.score.toFixed(2)}
             </div>
           </div>
         ))}
+      </div>
       </div>
     </>
   );
